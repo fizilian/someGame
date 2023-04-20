@@ -4,55 +4,49 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+
     public int defSpeed;
     public float Speed;
+    public float rotationSpeed;
     public Transform groundCheck;
     public LayerMask layerMask;
     public bool isGrounded;
     public float jumpForce;
     public float gravity;
-    public float dashForce;
     private Rigidbody rb;
     private bool canDoubleJump;
     public bool isDashing;
     public float dashSpeed;
     public int numOfDashes;
     private bool cooldown = false;
-    PlayerMovement moveScript;
 
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        moveScript = GetComponent<PlayerMovement>();
         Speed = defSpeed;
     }
+
+
+
     // Update is called once per frame
     void Update()
     {
+        float horInput = Input.GetAxisRaw("Horizontal");
+        float verInput = Input.GetAxisRaw("Vertical");
 
-        if (Input.GetKey(KeyCode.W))
+        Vector3 moveDir = new Vector3(horInput, 0, verInput);
+
+        rb.transform.Translate(moveDir * Time.deltaTime * Speed, Space.World);
+
+        if(moveDir != Vector3.zero)
         {
-            transform.Translate(Vector3.forward * Speed * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), 0.3f);
         }
 
-        if (Input.GetKey(KeyCode.S))
-        {
-            transform.Translate(Vector3.back * Speed * Time.deltaTime);
-        }
-
-        if (Input.GetKey(KeyCode.A))
-        {
-            transform.Translate(Vector3.left * Speed * Time.deltaTime);
-        }
-
-        if (Input.GetKey(KeyCode.D))
-        {
-            transform.Translate(Vector3.right * Speed * Time.deltaTime);
-        }
+        
 
         isGrounded = Physics.CheckSphere(groundCheck.position, 0.01f, layerMask);
-
 
         //Jump stuff, includes double jumps
         if (isGrounded)
@@ -62,7 +56,7 @@ public class PlayerMovement : MonoBehaviour
                 rb.velocity = new Vector2(rb.velocity.x, jumpForce);
                 canDoubleJump = true;
             }
-            
+
         }
         else
         {
@@ -73,6 +67,7 @@ public class PlayerMovement : MonoBehaviour
             }
             rb.AddForce(Vector3.down * gravity * Time.deltaTime);
         }
+
 
         //Everything below is code for Dashing
         if (!cooldown)
